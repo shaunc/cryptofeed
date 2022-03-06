@@ -1,5 +1,5 @@
 '''
-Copyright (C) 2017-2022 Bryant Moscon - bmoscon@gmail.com
+Copyright (C) 2017-2023 Bryant Moscon - bmoscon@gmail.com
 
 Please see the LICENSE file for the terms and conditions
 associated with this software.
@@ -19,13 +19,12 @@ class QuestCallback(SocketCallback):
         self.key = key if key else self.default_key
         self.numeric_type = float
         self.none_to = None
+        self.running = True
 
     async def writer(self):
-        await self.connect()
         while True:
+            await self.connect()
             async with self.read_queue() as updates:
-                if updates[-1] == 'STOP':
-                    break
                 update = "\n".join(updates) + "\n"
                 self.conn.write(update.encode())
 
@@ -102,3 +101,19 @@ class CandlesQuest(QuestCallback, BackendCallback):
         trades = f',trades={data["trades"]},' if data['trades'] else ','
         update = f'{self.key}-{data["exchange"]},symbol={data["symbol"]},interval={data["interval"]} start={data["start"]},stop={data["stop"]}{trades}open={data["open"]},close={data["close"]},high={data["high"]},low={data["low"]},volume={data["volume"]}{timestamp_str},receipt_timestamp={int(data["receipt_timestamp"]) * 1_000_000}t {int(data["receipt_timestamp"] * 1_000_000_000)}'
         await self.queue.put(update)
+
+
+class OrderInfoQuest(QuestCallback, BackendCallback):
+    default_key = 'order_info'
+
+
+class TransactionsQuest(QuestCallback, BackendCallback):
+    default_key = 'transactions'
+
+
+class BalancesQuest(QuestCallback, BackendCallback):
+    default_key = 'balances'
+
+
+class FillsQuest(QuestCallback, BackendCallback):
+    default_key = 'fills'
